@@ -15,6 +15,14 @@ build:
         manual:
           - src: "src/**/*.ts"
             dest: .
+    - image: nattigy/tickets
+      context: tickets
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
     - image: nattigy/client
       context: client
       docker:
