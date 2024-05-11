@@ -8,14 +8,14 @@ import {
   NotFoundError,
   NotAuthorizedError,
 } from "@nattigy-com/common";
-import { Ticket } from "../models/ticket";
-import { TicketUpdatedNATSPublisher } from "../events/publishers/ticket-updated-publisher";
+import { Order } from "../models/order";
+import { OrderUpdatedNATSPublisher } from "../events/publishers/order-updated-publisher";
 import { natsWrapper } from "../nats-wrapper";
 
 const router = express.Router();
 
 router.put(
-  "/api/tickets/:id",
+  "/api/orders/:id",
   requireAuth,
   [
     body("title").not().isEmpty().withMessage("Title is required!"),
@@ -25,37 +25,37 @@ router.put(
   ],
   validateRequest,
   async (req: Request, res: Response) => {
-    const ticket = await Ticket.findById(req.params.id);
+    const order = await Order.findById(req.params.id);
 
-    if (!ticket) {
+    if (!order) {
       throw new NotFoundError();
     }
 
-    if (ticket.userId !== req.currentUser?.id) {
+    if (order.userId !== req.currentUser?.id) {
       throw new NotAuthorizedError();
     }
 
     const { title, price } = req.body;
 
-    ticket.set({ title, price });
-    await ticket.save();
+    order.set({ title, price });
+    await order.save();
 
-    const publisher = new TicketUpdatedNATSPublisher(natsWrapper.client);
+    const publisher = new OrderUpdatedNATSPublisher(natsWrapper.client);
 
     try {
       publisher.publish({
-        id: ticket.id,
-        title: ticket.title,
-        price: ticket.price,
-        userId: ticket.userId,
+        id: order.id,
+        ticketId: order.ticketId,
+        price: order.price,
+        userId: order.userId,
       });
     } catch (e) {
       console.error("nats publishing error");
       console.error(e);
     }
 
-    res.send(ticket);
+    res.send(order);
   }
 );
 
-export { router as updateTicketRouter };
+export { router as updateOrderRouter };

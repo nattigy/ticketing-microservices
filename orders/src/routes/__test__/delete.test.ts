@@ -6,7 +6,7 @@ import { natsWrapper } from "../../nats-wrapper";
 it("returns a 404 if the provided id does not exist", async () => {
   const id = new mongoose.Types.ObjectId().toHexString();
   const response = await request(app)
-    .put(`/api/tickets/${id}`)
+    .put(`/api/orders/${id}`)
     .set("Cookie", global.signin())
     .send({
       title: "title",
@@ -15,9 +15,9 @@ it("returns a 404 if the provided id does not exist", async () => {
     .expect(404);
 });
 
-it("returns a 401 if the user does not own the ticket", async () => {
+it("returns a 401 if the user does not own the order", async () => {
   const response = await request(app)
-    .post("/api/tickets")
+    .post("/api/orders")
     .set("Cookie", global.signin())
     .send({
       title: "title",
@@ -26,7 +26,7 @@ it("returns a 401 if the user does not own the ticket", async () => {
     .expect(201);
 
   await request(app)
-    .put(`/api/tickets/${response.body.id}`)
+    .put(`/api/orders/${response.body.id}`)
     .set("Cookie", global.signin())
     .send({
       title: "updated title",
@@ -39,7 +39,7 @@ it("returns a 400 if the user provides an invalid title or price", async () => {
   const cookie = global.signin();
 
   await request(app)
-    .post("/api/tickets")
+    .post("/api/orders")
     .set("Cookie", cookie)
     .send({
       title: "",
@@ -47,7 +47,7 @@ it("returns a 400 if the user provides an invalid title or price", async () => {
     })
     .expect(400);
   await request(app)
-    .post("/api/tickets")
+    .post("/api/orders")
     .set("Cookie", cookie)
     .send({
       title: "title",
@@ -56,11 +56,11 @@ it("returns a 400 if the user provides an invalid title or price", async () => {
     .expect(400);
 });
 
-it("updates the ticket provided all inputs are correct", async () => {
+it("updates the order provided all inputs are correct", async () => {
   const cookie = global.signin();
 
   const response = await request(app)
-    .post("/api/tickets")
+    .post("/api/orders")
     .set("Cookie", cookie)
     .send({
       title: "title",
@@ -70,7 +70,7 @@ it("updates the ticket provided all inputs are correct", async () => {
 
   const newTitle = "new title";
   await request(app)
-    .put(`/api/tickets/${response.body.id}`)
+    .put(`/api/orders/${response.body.id}`)
     .set("Cookie", cookie)
     .send({
       title: newTitle,
@@ -78,19 +78,19 @@ it("updates the ticket provided all inputs are correct", async () => {
     })
     .expect(200);
 
-  const ticketResponse = await request(app)
-    .get(`/api/tickets/${response.body.id}`)
+  const orderResponse = await request(app)
+    .get(`/api/orders/${response.body.id}`)
     .send()
     .expect(200);
 
-  expect(ticketResponse.body.title).toEqual(newTitle);
+  expect(orderResponse.body.title).toEqual(newTitle);
 });
 
 it("publishes an event", async () => {
   const cookie = global.signin();
 
   const response = await request(app)
-    .post("/api/tickets")
+    .post("/api/orders")
     .set("Cookie", cookie)
     .send({
       title: "title",
@@ -100,7 +100,7 @@ it("publishes an event", async () => {
 
   const newTitle = "new title";
   await request(app)
-    .put(`/api/tickets/${response.body.id}`)
+    .put(`/api/orders/${response.body.id}`)
     .set("Cookie", cookie)
     .send({
       title: newTitle,

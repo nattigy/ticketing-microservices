@@ -7,6 +7,8 @@ import {
   requireAuth,
 } from "@nattigy-com/common";
 import { Ticket } from "../models/ticket";
+import { TicketCreatedNATSPublisher } from "../events/publishers/ticket-created-publisher";
+import { natsWrapper } from "../nats-wrapper";
 
 const router = express.Router();
 
@@ -29,6 +31,20 @@ router.post(
       userId: req.currentUser!.id,
     });
     await ticket.save();
+
+    const publisher = new TicketCreatedNATSPublisher(natsWrapper.client);
+
+    try {
+      await publisher.publish({
+        id: ticket.id,
+        title: ticket.title,
+        price: ticket.price,
+        userId: ticket.userId,
+      });
+    } catch (e) {
+      console.error("nats publishing error");
+      console.error(e);
+    }
 
     res.status(201).send(ticket);
   }

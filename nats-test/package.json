@@ -11,6 +11,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@nattigy-com/common": "^1.0.10",
     "@types/node": "^20.12.11",
     "node-nats-streaming": "^0.3.2",
     "ts-node-dev": "^2.0.0",
