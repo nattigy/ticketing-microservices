@@ -1,25 +1,26 @@
+import { OrderStatus } from "@nattigy-com/common";
 import mongoose from "mongoose";
+import { Order } from "./order";
 
 // An interface that describes the properties
 // that are requried to create a new Ticket
 interface TicketAttrs {
   title: string;
   price: number;
-  userId: string;
+}
+
+// An interface that describes the properties
+// that a Ticket Document has
+export interface TicketDoc extends mongoose.Document {
+  title: string;
+  price: number;
+  isReserved(): Promise<Boolean>;
 }
 
 // An interface that describes the properties
 // that a Ticket Model has
 interface TicketModel extends mongoose.Model<TicketDoc> {
   build(attrs: TicketAttrs): TicketDoc;
-}
-
-// An interface that describes the properties
-// that a Ticket Document has
-interface TicketDoc extends mongoose.Document {
-  title: string;
-  price: number;
-  userId: string;
 }
 
 const ticketSchema = new mongoose.Schema(
@@ -32,17 +33,12 @@ const ticketSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    userId: {
-      type: String,
-      required: true,
-    },
   },
   {
     toJSON: {
       transform(doc, ret) {
         ret.id = ret._id;
         delete ret._id;
-        delete ret.__v;
       },
     },
   }
@@ -50,6 +46,21 @@ const ticketSchema = new mongoose.Schema(
 
 ticketSchema.statics.build = (attrs: TicketAttrs) => {
   return new Ticket(attrs);
+};
+
+ticketSchema.methods.isReserved = async function () {
+  const existingOrder = await Order.findOne({
+    ticket: this,
+    status: {
+      $in: [
+        OrderStatus.Created,
+        OrderStatus.AwaitingPayment,
+        OrderStatus.Complete,
+      ],
+    },
+  });
+
+  return !!existingOrder;
 };
 
 const Ticket = mongoose.model<TicketDoc, TicketModel>("Ticket", ticketSchema);

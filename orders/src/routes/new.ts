@@ -5,13 +5,15 @@ import {
   validateRequest,
   BadRequestError,
   requireAuth,
+  NotFoundError,
 } from "@nattigy-com/common";
-import { Order } from "../models/order";
-import { OrderCreatedNATSPublisher } from "../events/publishers/order-created-publisher";
-import { natsWrapper } from "../nats-wrapper";
 import mongoose from "mongoose";
+import { Ticket } from "../models/ticket";
+import { Order, OrderStatus } from "../models/order";
 
 const router = express.Router();
+
+const EXPIRATION_WINDOW_SECONDS = 15 * 60;
 
 router.post(
   "/api/orders",
@@ -22,34 +24,31 @@ router.post(
       .isEmpty()
       .custom((input) => mongoose.Types.ObjectId.isValid(input))
       .withMessage("TickerId is required!"),
-    body("price")
-      .isFloat({ gt: 0 })
-      .withMessage("Price must be greater than zero!"),
   ],
   validateRequest,
   async (req: Request, res: Response) => {
-    const { ticketId, price } = req.body;
+    const { ticketId } = req.body;
+
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket) {
+      throw new NotFoundError();
+    }
+
+    const isReserved = await ticket.isReserved();
+    if (isReserved) {
+      throw new BadRequestError("Ticket is reserved");
+    }
+
+    const expiration = new Date();
+    expiration.setSeconds(expiration.getSeconds() + EXPIRATION_WINDOW_SECONDS);
 
     const order = Order.build({
-      ticketId,
-      price,
       userId: req.currentUser!.id,
+      status: OrderStatus.Created,
+      expiresAt: expiration,
+      ticket,
     });
     await order.save();
-
-    const publisher = new OrderCreatedNATSPublisher(natsWrapper.client);
-
-    try {
-      await publisher.publish({
-        id: order.id,
-        ticketId: order.ticketId,
-        price: order.price,
-        userId: order.userId,
-      });
-    } catch (e) {
-      console.error("nats publishing error");
-      console.error(e);
-    }
 
     res.status(201).send(order);
   }

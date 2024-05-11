@@ -1,11 +1,25 @@
+import { OrderStatus } from "@nattigy-com/common";
 import mongoose from "mongoose";
+import { TicketDoc } from "./ticket";
+
+export { OrderStatus };
 
 // An interface that describes the properties
 // that are requried to create a new Order
 interface OrderAttrs {
-  ticketId: string;
-  price: number;
+  status: OrderStatus;
+  expiresAt: Date;
   userId: string;
+  ticket: TicketDoc;
+}
+
+// An interface that describes the properties
+// that a Order Document has
+interface OrderDoc extends mongoose.Document {
+  status: OrderStatus;
+  expiresAt: Date;
+  userId: OrderStatus;
+  ticket: TicketDoc;
 }
 
 // An interface that describes the properties
@@ -14,27 +28,25 @@ interface OrderModel extends mongoose.Model<OrderDoc> {
   build(attrs: OrderAttrs): OrderDoc;
 }
 
-// An interface that describes the properties
-// that a Order Document has
-interface OrderDoc extends mongoose.Document {
-  ticketId: string;
-  price: number;
-  userId: string;
-}
-
 const orderSchema = new mongoose.Schema(
   {
-    ticketId: {
+    status: {
       type: String,
       required: true,
+      enum: Object.values(OrderStatus),
+      default: OrderStatus.Created,
     },
-    price: {
-      type: Number,
-      required: true,
+    expiresAt: {
+      type: mongoose.Schema.Types.Date,
     },
     userId: {
       type: String,
       required: true,
+    },
+    ticket: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "Ticket",
     },
   },
   {
@@ -42,7 +54,6 @@ const orderSchema = new mongoose.Schema(
       transform(doc, ret) {
         ret.id = ret._id;
         delete ret._id;
-        delete ret.__v;
       },
     },
   }
