@@ -16,14 +16,14 @@ export class TicketUpdatedNATSListener extends NATSListener<TicketUpdatedEvent> 
     data: TicketUpdatedEvent["data"],
     msg: Message
   ): Promise<void> {
-    const ticket = await Ticket.findById(data.id);
+    const ticket = await Ticket.findByPrevVersion(data);
 
     if (!ticket) {
       throw new NotFoundError();
     }
 
     const { title, price } = data;
-    
+
     ticket.set({ title, price });
     await ticket.save();
 

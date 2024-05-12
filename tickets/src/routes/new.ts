@@ -1,11 +1,7 @@
 import express, { Request, Response } from "express";
 import { body } from "express-validator";
 
-import {
-  validateRequest,
-  BadRequestError,
-  requireAuth,
-} from "@nattigy-com/common";
+import { validateRequest, requireAuth } from "@nattigy-com/common";
 import { Ticket } from "../models/ticket";
 import { TicketCreatedNATSPublisher } from "../events/publishers/ticket-created-publisher";
 import { natsWrapper } from "../nats-wrapper";
@@ -37,6 +33,7 @@ router.post(
     try {
       await publisher.publish({
         id: ticket.id,
+        version: ticket.version,
         title: ticket.title,
         price: ticket.price,
         userId: ticket.userId,

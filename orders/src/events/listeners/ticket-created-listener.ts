@@ -11,7 +11,10 @@ import { Ticket } from "../../models/ticket";
 export class TicketCreatedNATSListener extends NATSListener<TicketCreatedEvent> {
   readonly subject: Subjects.TicketCreated = Subjects.TicketCreated;
   queueGroupName = queueGroupName;
-  async onMessage(data: TicketCreatedEvent["data"], msg: Message): Promise<void> {
+  async onMessage(
+    data: TicketCreatedEvent["data"],
+    msg: Message
+  ): Promise<void> {
     const { id, title, price } = data;
     const ticket = Ticket.build({
       id,
