@@ -7,8 +7,12 @@ export const natsWrapper = {
           callback();
         }
       ),
-    listen: (subject: string, data: string, callback: () => void) => {
-      callback();
-    },
+    listen: jest
+    .fn()
+    .mockImplementation(
+      (subject: string, data: string, callback: () => void) => {
+        callback();
+      }
+    ),
   },
 };

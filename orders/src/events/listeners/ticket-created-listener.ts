@@ -11,6 +11,7 @@ import { Ticket } from "../../models/ticket";
 export class TicketCreatedNATSListener extends NATSListener<TicketCreatedEvent> {
   readonly subject: Subjects.TicketCreated = Subjects.TicketCreated;
   queueGroupName = queueGroupName;
+  
   async onMessage(
     data: TicketCreatedEvent["data"],
     msg: Message
